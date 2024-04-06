@@ -1,0 +1,292 @@
+---
+path: '/react/jsx/'
+date: 1000-01-04T17:12:33.962Z
+title: 'JSX語法'
+category: 'react'
+subCategory: 'React基礎'
+---
+
+import { Callout } from 'nextra/components';
+
+在過去使用原生 JS 程式碼開發網頁時，常常遇到一個問題: 你會發現類似以下的程式碼不斷的在重複:
+
+```javascript
+let menuContainer = document.createElement('div');
+menuContainer.setAttribute('class', 'menu-container');
+
+//藍色標題
+let title = document.createElement('p');
+title.setAttribute('class', 'menu-title');
+title.textContent = 'Andy Chang的Like';
+menuContainer.appendChild(title);
+```
+
+這樣的過程理論上也應該要被模組化包成函式比較好，於是 React 提供了一個類似的 API:
+
+```javascript
+React.createElement('div', undefined, 'hello world');
+```
+
+除了第二個參數不知道為啥是`undefined`外，其他你應該都猜的出來是要做甚麼的。
+
+> 實際上第一個參數是 component，第二個參數是 props，第三個參數是 children。現在不知道這些是啥沒關係，我們後面會提到
+
+當然，React 不只是包了「創造一般元素的功能」進去這個 API 裡面，有興趣的可以去看看 React 的 source code。
+
+然而這樣還是不夠直覺。
+
+於是就產生了「讓 HTML 可以直接寫在 Javascript 的語法」 - **JSX**。
+
+## JSX 的語法是什麼呢?
+
+在 React 16 之前，Babel 遇到 JSX 語法的時候會自動幫我們轉成`React.createElement`。以下是 JSX 的一些規定:
+
+### 1. HTML 語法可以當作參數、變數值傳遞
+
+例如，下方是合法的語法，會跟前一篇的 Hello world 一樣:
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const menuFactory = () => {
+    return <div>hello world!</div>;
+};
+
+const root = createRoot(document.getElementById('root'));
+root.render(menuFactory());
+```
+
+### 2. 傳遞 HTML 時，只能傳遞一個標籤元素
+
+<Callout type="error">
+意思是下方這樣是錯誤的:
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'));
+root.render(<div>hello world!</div><button>我是按鍵</button>);
+```
+</Callout>
+
+那如果我們想要傳遞多個元素怎麼辦?這個時候就要用一個 container 把元素包起來:
+
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+root.render(
+    <div>
+        <div>hello world!</div>
+        <button>我是按鍵</button>
+    </div>
+);
+```
+
+但是這樣很容易多出一堆沒有用的 container。為了解決這個問題，React 提供了一個叫 Fragment 的元件。
+
+```jsx
+import React, { Fragment } from 'react';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+    <Fragment>
+        <div>hello world!</div>
+        <button>我是按鍵</button>
+    </Fragment>
+);
+```
+
+實際渲染到畫面上時，React 會自己把 Fragment 去除掉
+![](https://i.imgur.com/JgbIeUg.png)
+
+另外如果嫌 Fragment 這個單字太長，React 也有提供**Fragment 簡寫的語法:`<></>`**
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+    <>
+        <div>hello world!</div>
+        <button>我是按鍵</button>
+    </>
+);
+```
+
+效果和剛剛一模一樣。
+
+### 3. 可以在 HTML 標籤中利用「{}」寫 Javascript 表示式
+
+以下面這個範例而言 :
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'));
+root.render(<div> {1 + 1} </div>);
+```
+
+執行結果是:
+![](https://i.imgur.com/1LfDS8K.png)
+
+請注意如果要在`{}`中使用字串，就必須要使用`"文字"`或是`'文字'`，因為`{}`中就等於是 Javascript 語法了。相反的像`true`或`false`這種布林值就不能加上引號。
+
+### 4. **「class」屬性變成「className」。**
+
+```jsx
+//這是正確的寫法
+root.render(
+    <ul className="menu">
+        <li className="menu-item">Like的發問</li>
+    </ul>
+);
+
+//這是錯誤的寫法
+root.render(
+    <ul class="menu">
+        <li class="menu-item">Like的發問</li>
+    </ul>
+);
+```
+
+### 5. style 變為一物件、屬性名稱規則改用駝峰法(用大寫區隔)、屬性的值變成字串
+
+```jsx
+const menuItemStyle = {
+    marginBottom: '7px',
+    paddingLeft: '26px',
+    listStyle: 'none',
+};
+
+root.render(
+    <ul className="menu">
+        <li className="menu-item" style={menuItemStyle}>
+            Like的發問
+        </li>
+    </ul>
+);
+```
+
+需要特別注意的是直接在標籤中給 style 值的寫法:
+
+```jsx
+root.render(
+    <ul className="menu">
+        <li
+            className="menu-item"
+            style={{ marginBottom: '7px', paddingLeft: '26px', listStyle: 'none' }}
+        >
+            Like的發問
+        </li>
+    </ul>
+);
+```
+
+這裡之所以會有兩層大括號，是因為外面那層括號代表 style 要被賦予的值會是 javascript 語法，裡面的括號則表示物件型態。
+
+### 6. 元素 Array 會被自動展開
+
+在下面的程式中，menuItemWording 是一個 array，React 就自動展開它裡面的元素並顯示。
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'));
+
+let menuItemWording = ['Like的發問', 'Like的回答', 'Like的文章', 'Like的留言'];
+let menuItemArr = menuItemWording.map(wording => <li className="menu-item"> {wording}</li>);
+
+root.render(<ul className="menu">{menuItemArr}</ul>);
+```
+
+### 7. JSX 的 JS 表示式中，可以用布林值比較來決定是否顯示元素
+
+在 Javascript 中有個特別的布林值比較語法。像是以下 code 代表如果`condition`為 true 時，回傳後面的 1
+
+```javascript
+const condition = true;
+const data = condition && 1;
+
+console.log(data);
+// 印出 1
+```
+
+我們可以將這個語法利用在 JSX 中，讓程式碼更簡潔。例如在以下程式碼中，你會發現按鍵並沒有被顯示
+
+```jsx
+root.render(
+    <ul className="menu">{false && <button>我是按鍵</button>}</ul>
+);
+```
+
+換成這個就會顯示了
+
+```jsx
+root.render(
+    <ul className="menu">{true && <button>我是按鍵</button>}</ul>
+);
+```
+
+也就是剛剛的程式碼其實等於
+
+```jsx
+const menuItemFactory = () => {
+    if (true) return <button>我是按鍵</button>;
+};
+
+root.render(<ul className="menu">{menuItemFactory()}</ul>);
+```
+
+### 8. 所有原生的屬性名稱改為駝峰法命名
+
+例如，onclick 變成了 onClick。
+
+```jsx
+const handleClick = event => {
+    console.log(event.target.value);
+};
+
+root.render(
+    <ul className="menu">
+        <button value={87} onClick={handleClick}>
+            我是按鍵
+        </button>
+    </ul>
+);
+```
+
+有關其他輸入元素的控制方法，我們會在後面的章節提到。
+
+## React 17 之後
+
+使用 JSX，再讓 babel 轉成`React.createElement`的做法在開發上雖然比以前方便很多，但也遇到了兩個問題:
+
+1. 為了要讓 Babel 知道要轉成`React.createElement`，每次在 React 元件的 JS 檔中都要`import React from 'react'`。
+2. 有一些改善效能、簡化的語法會因為`React.createElement`而不能使用。
+
+為了解決這兩個問題，在 2020 年推出的 React 17 中，讓 babel 能夠在編譯時，只要遇到 JSX 就會知道要轉成一個**新的函式 - `jsx()`**。簡單來說，以後我們就不用在開頭一直`import React from 'react'`了!
+
+```javascript
+jsx('h1', { children: 'Hello world' });
+```
+
+<Callout type="warning">
+在目前(2024/02)的 React 中，預設還是用原本的編譯方式。如果你現在就想體驗這個功能，要對打包工具新增一些設定，詳情可以參考[React 官網](https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html)。
+
+```json
+// If you are using @babel/preset-react
+{
+    "presets": [
+        // 把@babel/preset-react改成下面這樣
+        ["@babel/preset-react", { "runtime": "automatic" }]
+    ]
+}
+```
+</Callout>
