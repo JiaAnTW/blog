@@ -74,7 +74,7 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Install dependencies @napi-rs/snappy-linux-arm64-gnu
-        run: npm i @napi-rs/snappy-linux-arm64-gnu --save-dev -f
+        run: npm i @napi-rs/simple-git-linux-x64-gnu @napi-rs/snappy-linux-arm64-gnu --save-dev -f
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
