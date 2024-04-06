@@ -1,0 +1,95 @@
+---
+path: '/react/fc/'
+date: 1000-01-05T17:12:33.962Z
+title: 'function component'
+category: 'react'
+subCategory: 'React基礎'
+---
+
+有了 JSX 之後，工程師還是不滿足。因為過去像這樣的過程不斷的重複:
+
+```javascript
+let menuItemWording = ['Like的發問', 'Like的回答', 'Like的文章', 'Like的留言'];
+
+let menuItem = menuItemWording.map(wording => new MenuItem(wording));
+
+let menuInstance = new Menu(menuItem);
+```
+
+但這樣不就等於是我們在自製 HTML 元素嗎? 既然現在 HTML 標籤元素可以被運算，那我們自製的元素能不能也用和 HTML 標籤元素一樣的方法使用呢?
+
+於是，function component 就誕生了。
+
+## function component 的語法
+
+在 React 中，我們只要遵循以下規則，就能讓 function 變成 React 的元件，並且在 JSX 中以`<我的元件/>`或是`<我的元件><我的元件/>`方式使用。
+
+-   開頭引入 React(React 17 前)
+-   **函數名稱為大寫**
+-   回傳 JSX
+
+例如，這是一個以**原生 JS**撰寫的MenuItem:
+
+```javascript
+function MenuItem(wording) {
+    let menuItem = document.createElement('li');
+    menuItem.setAttribute('class', 'menu-item');
+    menuItem.textContent = wording;
+
+    this.getDOMItem = () => menuItem;
+}
+```
+
+**在 React 中，我們可以這樣寫**:
+
+-   src/component/MenuItem.js (請注意這裡的路徑有小變化)
+
+```jsx
+import React from 'react';
+
+function MenuItem() {
+    return <li>文字</li>;
+}
+
+export default MenuItem;
+```
+
+而回到前一篇的`src/index.js`，我們就能以`<MenuItem/>`或是`<MenuItem><MenuItem/>`的方式使用 MenuItem
+
+-   src/index.js
+
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'));
+
+// 引入剛剛撰寫的元件
+import MenuItem from './component/MenuItem';
+
+let menuItemWording = ['Like的發問', 'Like的回答', 'Like的文章', 'Like的留言'];
+
+let menuItemArr = menuItemWording.map(wording => <MenuItem />);
+
+root.render(<div>{menuItemArr}</div>, document.getElementById('root'));
+```
+
+執行結果:
+![](https://i.imgur.com/LbfjQsG.png)
+是不是很方便呢?
+
+## function component和一般函式的差異
+在前面的教學文中，我們提及可以利用一般函式重複製造元素。
+```jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const menuFactory = () => {
+    return <div>hello world!</div>;
+};
+
+const root = createRoot(document.getElementById('root'));
+root.render(menuFactory());
+```
+
+這樣的做法和function component的差別是，函式只能重複製造元素，而function component可以使用React內建的特殊功能(例如: 可自動監聽的變數、生命週期等)。我們會在後面的文章中提到。

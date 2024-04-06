@@ -1,0 +1,149 @@
+import { Callout } from 'nextra/components';
+
+# Hello world
+## 第一個 React 程式 - Hello world
+
+請將`src/index.js`的程式碼改為:
+
+```javascript
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'));
+root.render(<div>hello React!</div>);
+```
+
+<Callout>
+
+在React 17(包含17)以前，你必須使用 `ReactDOM.render` 而不是 `ReactDOM.createRoot`。
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+ReactDOM.render(<div>hello React!</div>, document.getElementById('root'));
+```
+
+這是因為React 18 透過`createRoot`導入了新的效能優化機制，我們會在後面的章節提到。
+
+</Callout>
+
+接著執行`npx webpack -p`或是`npm run build`，打開`build/index.html`，你會看到:
+![](https://i.imgur.com/AYhzx59.png)
+我們的第一個 React 程式就完成了。
+
+## 剛剛做了什麼事情 - 談談 React Virtual DOM
+
+在原生的 Javascript 中，我們會直接用`document.屬性 = 新值`來修改網頁程式(也就是操作 DOM)。 然而這樣做，很容易會不小心修改到不需要更動的地方，造成資源的浪費。
+
+設計 React 的工程師為了解決這件事，讓 React 程式碼在更新 DOM 之前，先用 Javascript 製造出一個模擬的 DOM，用這個 Virtual DOM 模擬所有「更新後應該要長的樣子」，由於網頁程式文件(DOM)的架構就像是一棵樹，所以工程師引入資料結構中樹的 Traversal 概念，設計出一個特殊的 Diff 演算法去比較「模擬好未來長怎樣的虛擬 DOM」和「當前 DOM」所有節點的差別。最後，React 就只會去修改「有不一樣的地方」，達到避免資源浪費的效果。
+
+[參考文件](https://zh-hant.reactjs.org/docs/reconciliation.html)
+
+<Callout type="warning">
+請注意由於多了一層上述過程，引入 Virtual DOM 會讓更新的速度比直接操作 DOM API 慢(只不過通常沒感覺)，Virtual DOM 只是讓資源浪費最小化而已。
+</Callout>
+
+所以回過頭來看剛剛的程式碼:
+
+```javascript
+const root = createRoot(document.getElementById('root'));
+root.render(<div>hello React!</div>);
+```
+
+透過`createRoot`，我們告訴React「我們的程式碼應該要被要放在哪個 HTML 元素內」。(以這裡為例就是`<div id="root"></div>`裡面)。
+
+`createRoot`會回傳React程式的進入點。我們可以使用`render`傳入「**要渲染到畫面上的元素**」。(以這裡為例就是把`<div>hello React!</div>`丟到之前在`build/index.html`的`<div id="root"></div>`裡面。)
+
+一般的做法是**一個專案只會有一個root，之後所有對於對於網頁元素的操作都透過這一行`render`處理**。也就是所有專案的元素都會被 React 包進`build/index.html`的`<div id="root"></div>`裡面。
+
+不過看到這裡，你應該會有一個很大很大的疑惑:
+
+> 為什麼傳入render的參數是 HTML 程式碼不是字串，卻不會有任何問題呢?
+
+這就是 React 所使用的 JSX 語法所導致的。我們會在下一篇來聊聊 JSX 是什麼，以及他怎麼運作。
+
+## 環境設定 - 安裝 webpack-dev-server
+
+如果每次開發都要`npm run build`才能檢查結果，那真的是一件很煩的事情。
+
+**_webpack-dev-server 就是一款能讓你一改程式碼就能預覽到結果的開發工具。_**
+
+### 1. 請打開 terminal，輸入:
+
+```bash
+npm install webpack-dev-server --save-dev
+```
+
+### 2. 修改 webpack.config.js:
+
+-   webpack.config.js
+
+```javascript
+const path = require('path');
+module.exports = {
+    entry: {
+        index: './src/index.js',
+    },
+    output: {
+        filename: 'bundle.js',
+        path: path.resolve('./build'),
+    },
+    module: {
+        rules: [
+            {
+                test: /.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-react', '@babel/preset-env'],
+                    },
+                },
+            },
+        ],
+    },
+    //------ 加入以下內容 ------
+    devServer: {
+        static: {
+            directory: path.join(__dirname, './build'), // 本來打包完的檔案位置
+        },
+        port: 8080, // 預覽網頁要跑在哪個port
+    }
+};
+```
+
+### 3.(非必須) 修改 package.json
+
+package.json
+
+```json
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack -p",
+    //加入這行
+    "dev": "webpack-dev-server"
+  }
+```
+
+### 4. 大功告成
+
+之後每次開發前，只要先輸入
+
+```
+npm run dev
+```
+
+或是
+
+```
+npx webpack-dev-server
+```
+
+打開瀏覽器的`localhost:8080`。接著每次修改編譯前的檔案時，就能馬上預覽到結果
+![](https://i.imgur.com/qBxtGMC.png)
+![](https://i.imgur.com/xOiuCbh.png)
+請注意這裏只是開發使用，因為還沒有編譯、打包，你不能直接就把沒打包的檔案丟到伺服器上。webpack-dev-server 編譯出來的結果也可能會和 build 之後的結果不一樣。
+
+另外如果語法有錯的話，webpack-dev-server 就會無法讓你預覽，並顯示編譯結果有誤喔
+
+![](https://i.imgur.com/JyFx3mt.png)
