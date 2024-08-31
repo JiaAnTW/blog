@@ -108,7 +108,8 @@ module.exports = {
             directory: path.join(__dirname, './build'), // 本來打包完的檔案位置
         },
         port: 8080, // 預覽網頁要跑在哪個port
-    }
+    },
+    mode: 'development'
 };
 ```
 
@@ -119,7 +120,7 @@ package.json
 ```json
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack -p",
+    "build": "webpack --mode production",
     //加入這行
     "dev": "webpack-dev-server"
   }
